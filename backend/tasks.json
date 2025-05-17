@@ -2,7 +2,10 @@
   {
     "id": "1",
     "title": "Sample task",
-    "description": "Edit me or drag me!",
-    "status": "todo"
+    "description": "test\n",
+    "status": "todo",
+    "priority": "high",
+    "due_date": "2025-05-23",
+    "tags": []
   }
 ]
