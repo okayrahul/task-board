@@ -31,7 +31,7 @@ export default function Board({ tasks, setTasks }) {
   );
   
   function findContainer(id) {
-    if (id in ['todo', 'inProgress', 'done']) return id;
+    if (['todo', 'inProgress', 'done'].includes(id)) return id;
     
     const task = tasks.find(task => task.id === id);
     return task ? task.status : null;
@@ -57,32 +57,34 @@ export default function Board({ tasks, setTasks }) {
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     
-    if (!over) {
+    if (!active || !over) {
       setActiveId(null);
       setActiveTask(null);
       return;
     }
     
-    const activeContainer = findContainer(active.id);
-    const overContainer = findContainer(over.id);
+    const activeId = active.id;
+    const overId = over.id;
     
-    // If dropping on a task, use its container
-    if (!statuses.find(s => s.key === overContainer)) {
-      const overTask = findTaskById(over.id);
-      if (overTask) {
-        // Use the status of the task we're dropping on
-        const overContainer = overTask.status;
-        
-        // If dropping in same container, do nothing
-        if (activeContainer === overContainer) {
-          setActiveId(null);
-          setActiveTask(null);
-          return;
-        }
-        
+    if (!activeId || !overId) {
+      setActiveId(null);
+      setActiveTask(null);
+      return;
+    }
+    
+    const activeTask = findTaskById(activeId);
+    if (!activeTask) {
+      setActiveId(null);
+      setActiveTask(null);
+      return;
+    }
+    
+    // If dropping on a column directly (todo, inProgress, done)
+    if (['todo', 'inProgress', 'done'].includes(overId)) {
+      if (activeTask.status !== overId) {
         // Update the task's status
         const updatedTasks = tasks.map(t =>
-          t.id === active.id ? { ...t, status: overContainer } : t
+          t.id === activeId ? { ...t, status: overId } : t
         );
         
         // Call parent setter for optimistic update
@@ -90,25 +92,29 @@ export default function Board({ tasks, setTasks }) {
         
         // Also call API to ensure it's updated
         try {
-          await axios.post(`${API_URL}/tasks/${active.id}/move/${overContainer}`);
+          await axios.post(`${API_URL}/tasks/${activeId}/move/${overId}`);
         } catch (error) {
           console.error('Error moving task:', error);
         }
       }
-    } else if (overContainer && activeContainer !== overContainer) {
-      // Dropping directly in a different column
-      const updatedTasks = tasks.map(t =>
-        t.id === active.id ? { ...t, status: overContainer } : t
-      );
-      
-      // Call parent setter for optimistic update
-      setTasks(updatedTasks);
-      
-      // Also call API to ensure it's updated
-      try {
-        await axios.post(`${API_URL}/tasks/${active.id}/move/${overContainer}`);
-      } catch (error) {
-        console.error('Error moving task:', error);
+    } else {
+      // Dropping on another task - use the target task's status
+      const overTask = findTaskById(overId);
+      if (overTask && activeTask.status !== overTask.status) {
+        // Update the task's status
+        const updatedTasks = tasks.map(t =>
+          t.id === activeId ? { ...t, status: overTask.status } : t
+        );
+        
+        // Call parent setter for optimistic update
+        setTasks(updatedTasks);
+        
+        // Also call API to ensure it's updated
+        try {
+          await axios.post(`${API_URL}/tasks/${activeId}/move/${overTask.status}`);
+        } catch (error) {
+          console.error('Error moving task:', error);
+        }
       }
     }
     
@@ -172,11 +178,82 @@ export default function Board({ tasks, setTasks }) {
         </div>
       </div>
 
+      <div className={`${theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-blue-50 text-blue-800'} p-3 rounded-md text-sm mb-2 flex items-center`}>
+        <div className="mr-2">💡</div>
+        <div>Drag and drop tasks between columns to update their status. Grab a task card and drop it on any column.</div>
+      </div>
+
       <DndContext 
         sensors={sensors}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        collisionDetection={(args) => {
+          // Enhanced collision detection to prioritize columns
+          const { active, droppableContainers, droppableRects } = args;
+          
+          // Safety check to avoid errors from undefined values
+          if (!active || !active.rect || !active.rect.current || !droppableRects || !droppableContainers) {
+            return [];
+          }
+          
+          // Check if translated exists and has needed properties
+          const translated = active.rect.current.translated;
+          if (!translated) {
+            return [];
+          }
+          
+          // First check if we're directly over a column (todo, inProgress, done)
+          for (const containerId of ['todo', 'inProgress', 'done']) {
+            const container = droppableContainers.find(c => c.id === containerId);
+            if (container) {
+              const rect = droppableRects.get(containerId);
+              // Ensure all properties needed exist before using them
+              if (rect && 
+                  rect.right !== undefined && translated.left !== undefined &&
+                  rect.left !== undefined && translated.right !== undefined &&
+                  rect.bottom !== undefined && translated.top !== undefined &&
+                  rect.top !== undefined && translated.bottom !== undefined &&
+                  translated.left < rect.right &&
+                  translated.right > rect.left &&
+                  translated.top < rect.bottom &&
+                  translated.bottom > rect.top) {
+                return [{ id: containerId }];
+              }
+            }
+          }
+          
+          // If not over a column, use default collision detection from DndKit
+          const closestDraggables = [];
+          
+          for (const droppableContainer of droppableContainers) {
+            if (!droppableContainer || !droppableContainer.id) continue;
+            
+            const rect = droppableRects.get(droppableContainer.id);
+            
+            if (rect && rect.width !== undefined && rect.height !== undefined && 
+                rect.left !== undefined && rect.top !== undefined && 
+                translated && translated.left !== undefined && translated.top !== undefined &&
+                active.rect.current.width !== undefined && active.rect.current.height !== undefined) {
+              
+              // All needed properties are available, calculate distance
+              const distanceFromCenter = Math.sqrt(
+                Math.pow(translated.left + active.rect.current.width / 2 - (rect.left + rect.width / 2), 2) +
+                Math.pow(translated.top + active.rect.current.height / 2 - (rect.top + rect.height / 2), 2)
+              );
+              
+              closestDraggables.push({
+                id: droppableContainer.id,
+                distance: distanceFromCenter,
+              });
+            }
+          }
+          
+          // Sort by distance
+          closestDraggables.sort((a, b) => a.distance - b.distance);
+          
+          return closestDraggables.map(d => ({ id: d.id }));
+        }}
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {statuses.map(s => (

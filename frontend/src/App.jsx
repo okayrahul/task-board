@@ -50,6 +50,35 @@ export default function App() {
 
   useEffect(() => { fetchTasks() }, [])
 
+  // Listen for task update and delete events
+  useEffect(() => {
+    const handleTaskUpdated = (event) => {
+      // Check if we have the detail data in the event
+      if (event && event.detail && event.detail.taskId) {
+        console.log(`Task updated: ${event.detail.taskId}`);
+      }
+      fetchTasks();
+    };
+    
+    const handleTaskDeleted = (event) => {
+      // Check if we have the detail data in the event
+      if (event && event.detail && event.detail.taskId) {
+        console.log(`Task deleted: ${event.detail.taskId}`);
+        // You could also do an optimistic delete here
+        // setTasks(tasks => tasks.filter(t => t.id !== event.detail.taskId));
+      }
+      fetchTasks();
+    };
+    
+    window.addEventListener('taskUpdated', handleTaskUpdated);
+    window.addEventListener('taskDeleted', handleTaskDeleted);
+    
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdated);
+      window.removeEventListener('taskDeleted', handleTaskDeleted);
+    };
+  }, []);
+
   const handleUpdate = async (updated) => {
     // optimistic update
     setTasks(updated)

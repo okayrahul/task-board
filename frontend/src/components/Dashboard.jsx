@@ -7,7 +7,9 @@ import {
   FaCalendarAlt,
   FaExclamationTriangle,
   FaArrowUp,
-  FaArrowDown
+  FaArrowDown,
+  FaDownload,
+  FaTag
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useTheme } from '../context/ThemeContext';
@@ -67,7 +69,37 @@ export default function Dashboard({ tasks }) {
     });
   };
   
-  // Calculate completion rate
+  // Export tasks to CSV
+  const exportToCSV = () => {
+    // Create CSV header
+    const csvHeader = ["ID", "Title", "Description", "Status", "Priority", "Due Date", "Tags"];
+    
+    // Format tasks data
+    const csvRows = tasks.map(task => [
+      task.id,
+      `"${task.title?.replace(/"/g, '""') || ''}"`, // Escape quotes in title
+      `"${task.description?.replace(/"/g, '""') || ''}"`, // Escape quotes in description
+      task.status || '',
+      task.priority || 'medium',
+      task.due_date || '',
+      task.tags ? `"${task.tags.join(',')}"` : '' // Join tags with comma
+    ]);
+    
+    // Combine header and rows
+    const csvContent = [csvHeader, ...csvRows].map(row => row.join(',')).join('\n');
+    
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `tasks-export-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+    // Calculate completion rate
   const completionRate = stats.by_status && stats.total > 0 
     ? Math.round((stats.by_status.done / stats.total) * 100) 
     : 0;
@@ -77,6 +109,12 @@ export default function Dashboard({ tasks }) {
     const maxHeight = 150; // max height in pixels
     const percentage = stats.total > 0 ? (count / stats.total) : 0;
     return Math.max(percentage * maxHeight, 10); // at least 10px height
+  };
+
+  // Use a safer approach instead of alerts
+  const handleCardClick = (message) => {
+    console.log(message); // Just log to console instead of alert
+    // In the future, you could implement a toast notification here
   };
 
   // Theme-dependent styles
@@ -104,15 +142,39 @@ export default function Dashboard({ tasks }) {
     subheader: theme === 'dark' ? 'text-gray-300' : 'text-gray-600',
     highlight: theme === 'dark' ? 'text-white' : 'text-gray-800',
   };
-  const chartBg = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50';
-
-  return (
-    <div className={`${cardBg} rounded-xl shadow-lg p-6 mb-8`}>
-      <h2 className={`text-2xl font-bold mb-6 ${textColor.header}`}>Task Dashboard</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  const chartBg = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50';  return (
+    <div className={`${cardBg} rounded-xl shadow-lg p-6 mb-8`}>      <h2 className={`text-2xl font-bold mb-6 ${textColor.header} flex justify-between items-center`}>
+        <span>Task Dashboard</span>
+        <div className="flex space-x-2">
+          <button 
+            onClick={exportToCSV} 
+            className={`text-sm px-3 py-1 rounded-md flex items-center ${theme === 'dark' ? 'bg-green-700 hover:bg-green-600' : 'bg-green-600 hover:bg-green-700'} text-white`}
+          >
+            <FaDownload className="mr-1" /> Export Tasks
+          </button>
+          <button 
+            onClick={(e) => { 
+              e.preventDefault();
+              const fetchStats = async () => {
+                try {
+                  const { data } = await axios.get(`${API_URL}/stats`);
+                  setStats(data);
+                } catch (error) {
+                  calculateStats();
+                }
+              };
+              fetchStats();
+            }} 
+            className={`text-sm px-3 py-1 rounded-md ${theme === 'dark' ? 'bg-blue-700 hover:bg-blue-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+          >
+            Refresh Data
+          </button>
+        </div>
+      </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* Total Tasks Card */}
-        <div className={`${statBg.blue} rounded-lg p-4 flex items-center`}>
+        <div className={`${statBg.blue} rounded-lg p-4 flex items-center cursor-pointer transform transition-transform hover:scale-105`}
+             onClick={() => handleCardClick(`You have ${stats.total} total tasks`)}>
           <div className={`rounded-full ${iconBg.blue} p-3 mr-4`}>
             <FaListUl className={`${iconColor.blue} text-xl`} />
           </div>
@@ -123,7 +185,8 @@ export default function Dashboard({ tasks }) {
         </div>
         
         {/* To Do Card */}
-        <div className={`${statBg.red} rounded-lg p-4 flex items-center`}>
+        <div className={`${statBg.red} rounded-lg p-4 flex items-center cursor-pointer transform transition-transform hover:scale-105`}
+             onClick={() => handleCardClick(`You have ${stats.by_status?.todo || 0} tasks to do`)}>
           <div className={`rounded-full ${iconBg.red} p-3 mr-4`}>
             <FaListUl className={`${iconColor.red} text-xl`} />
           </div>
@@ -134,7 +197,8 @@ export default function Dashboard({ tasks }) {
         </div>
         
         {/* In Progress Card */}
-        <div className={`${statBg.yellow} rounded-lg p-4 flex items-center`}>
+        <div className={`${statBg.yellow} rounded-lg p-4 flex items-center cursor-pointer transform transition-transform hover:scale-105`}
+             onClick={() => handleCardClick(`You have ${stats.by_status?.inProgress || 0} tasks in progress`)}>
           <div className={`rounded-full ${iconBg.yellow} p-3 mr-4`}>
             <FaClock className={`${iconColor.yellow} text-xl`} />
           </div>
@@ -145,7 +209,8 @@ export default function Dashboard({ tasks }) {
         </div>
         
         {/* Done Card */}
-        <div className={`${statBg.green} rounded-lg p-4 flex items-center`}>
+        <div className={`${statBg.green} rounded-lg p-4 flex items-center cursor-pointer transform transition-transform hover:scale-105`}
+             onClick={() => handleCardClick(`You have completed ${stats.by_status?.done || 0} tasks`)}>
           <div className={`rounded-full ${iconBg.green} p-3 mr-4`}>
             <FaCheckCircle className={`${iconColor.green} text-xl`} />
           </div>
@@ -290,6 +355,16 @@ export default function Dashboard({ tasks }) {
             <p className={`mt-2 text-sm ${textColor.subheader}`}>Done</p>
           </div>
         </div>
+      </div>
+
+      {/* Export to CSV Button */}
+      <div className="mt-4">
+        <button 
+          onClick={exportToCSV} 
+          className={`flex items-center px-4 py-2 rounded-md ${theme === 'dark' ? 'bg-blue-700 hover:bg-blue-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+        >
+          <FaDownload className="mr-2" /> Export to CSV
+        </button>
       </div>
     </div>
   );

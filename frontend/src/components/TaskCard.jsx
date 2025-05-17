@@ -19,11 +19,16 @@ export default function TaskCard({ id, task, isDragging = false }) {
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id });
+  } = useSortable({ 
+    id: id || task?.id, 
+    disabled: editing || isDeleting
+  });
   
-  const style = {
+  const style = transform ? {
     transform: CSS.Transform.toString(transform),
     transition,
+  } : {
+    transition
   };
 
   // Priority color mapping based on theme
@@ -47,37 +52,103 @@ export default function TaskCard({ id, task, isDragging = false }) {
   };
   
   const handleSave = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
+      // Validate that we have necessary data before saving
+      if (!task || !task.id) {
+        console.error('Cannot update task: No task ID found');
+        setEditing(false);
+        return;
+      }
+      
+      if (!editedTask || !editedTask.title) {
+        alert('Task title cannot be empty');
+        return;
+      }
+      
+      // Make the API call to update the task
       await axios.put(`${API_URL}/tasks/${task.id}`, {
         title: editedTask.title,
-        description: editedTask.description,
-        status: editedTask.status,
+        description: editedTask.description || '',
+        status: editedTask.status || task.status,
         priority: editedTask.priority || 'medium',
-        due_date: editedTask.due_date,
+        due_date: editedTask.due_date || null,
         tags: editedTask.tags || []
-      })
-      setEditing(false)
-      // Reload tasks to reflect changes
-      window.location.reload()
+      });
+      
+      setEditing(false);
+      
+      // Dispatch a custom event with task details to notify the app
+      window.dispatchEvent(new CustomEvent('taskUpdated', { 
+        detail: { 
+          taskId: task.id,
+          taskTitle: editedTask.title
+        } 
+      }));
+      
     } catch (error) {
-      console.error('Error updating task:', error)
+      console.error('Error updating task:', error);
+      
+      // Display an appropriate error message based on the error
+      if (error.response) {
+        if (error.response.status === 404) {
+          alert('Could not update task: Task not found');
+        } else if (error.response.status === 400) {
+          alert('Invalid task data. Please check your input.');
+        } else {
+          alert('Server error when updating task. Please try again.');
+        }
+      } else if (error.request) {
+        alert('Network error. Please check your connection and try again.');
+      } else {
+        alert('An unexpected error occurred. Please try again later.');
+      }
     }
   }
   
-  const handleDelete = async () => {
+  const handleDelete = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (isDeleting) {
       try {
-        await axios.delete(`${API_URL}/tasks/${task.id}`)
-        // Reload tasks to reflect changes
-        window.location.reload()
+        // Check the task id exists before attempting to delete
+        if (!task || !task.id) {
+          console.error('Cannot delete task: No task ID found');
+          setIsDeleting(false);
+          return;
+        }
+        
+        await axios.delete(`${API_URL}/tasks/${task.id}`);
+        
+        // Dispatch a custom event with the task ID to notify the app
+        window.dispatchEvent(new CustomEvent('taskDeleted', { 
+          detail: { 
+            taskId: task.id,
+            taskTitle: task.title
+          } 
+        }));
+        
       } catch (error) {
-        console.error('Error deleting task:', error)
+        console.error('Error deleting task:', error);
+        setIsDeleting(false);
+        
+        // Display an error message to the user
+        // (In a real app, you might want to use a toast notification system)
+        if (error.response && error.response.status === 404) {
+          alert('Could not delete task: Task not found');
+        } else {
+          alert('Could not delete task. Please try again later.');
+        }
       }
     } else {
-      setIsDeleting(true)
+      setIsDeleting(true);
       // Reset after 3 seconds if not confirmed
-      setTimeout(() => setIsDeleting(false), 3000)
+      setTimeout(() => setIsDeleting(false), 3000);
     }
   }
 
@@ -159,7 +230,11 @@ export default function TaskCard({ id, task, isDragging = false }) {
             </button>
             <button 
               type="button"
-              onClick={() => setEditing(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setEditing(false);
+              }}
               className={theme === 'dark' ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-800"}
               title="Cancel editing"
             >
@@ -206,14 +281,18 @@ export default function TaskCard({ id, task, isDragging = false }) {
           
           <div className="flex justify-end mt-2 space-x-2">
             <button 
-              onClick={() => setEditing(true)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setEditing(true);
+              }}
               className={theme === 'dark' ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"}
               title="Edit task"
             >
               <FaEdit />
             </button>
             <button 
-              onClick={handleDelete}
+              onClick={(e) => handleDelete(e)}
               className={isDeleting 
                 ? theme === 'dark' ? "text-red-400 animate-pulse" : "text-red-500 animate-pulse" 
                 : theme === 'dark' ? "text-gray-400 hover:text-red-400" : "text-gray-500 hover:text-red-700"
@@ -234,11 +313,18 @@ export default function TaskCard({ id, task, isDragging = false }) {
       style={style}
       {...attributes}
       {...listeners}
-      className={`p-3 ${cardBg} rounded shadow hover:shadow-md transition-shadow ${
+      className={`p-3 ${cardBg} rounded shadow hover:shadow-md transition-all duration-200 ${
         isDragging 
-          ? theme === 'dark' ? 'shadow-lg ring-2 ring-blue-500' : 'shadow-lg ring-2 ring-blue-200' 
-          : ''
+          ? theme === 'dark' ? 'shadow-xl ring-2 ring-blue-500 opacity-75 scale-105 z-50 cursor-grabbing' 
+          : 'shadow-xl ring-2 ring-blue-300 opacity-75 scale-105 z-50 cursor-grabbing' 
+          : 'cursor-grab'
       } ${isOverdue() ? `border-l-4 ${theme === 'dark' ? 'border-red-700' : 'border-red-500'}` : ''}`}
+      onClick={(e) => {
+        // Only handle click if we're not in editing mode
+        if (!editing) {
+          e.stopPropagation();
+        }
+      }}
     >
       {renderTaskContent()}
     </div>

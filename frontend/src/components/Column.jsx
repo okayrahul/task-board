@@ -49,8 +49,12 @@ export default function Column({ id, status, title, color, tasks }) {
       
       <div
         ref={setNodeRef}
-        className={`p-3 space-y-3 min-h-[50vh] transition-colors ${
-          isOver ? info.hoverBg : ''
+        className={`p-3 space-y-3 min-h-[50vh] transition-all duration-300 ${
+          isOver 
+            ? theme === 'dark' 
+              ? 'bg-gray-700/70 ring-2 ring-blue-500/70 ring-inset' 
+              : 'bg-blue-50 ring-2 ring-blue-300 ring-inset'
+            : ''
         }`}
       >
         <SortableContext
