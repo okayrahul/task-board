@@ -14,7 +14,7 @@ import {
 import axios from 'axios';
 import { useTheme } from '../context/ThemeContext';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Dashboard({ tasks }) {
   const { theme } = useTheme();

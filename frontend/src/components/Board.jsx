@@ -12,7 +12,7 @@ const statuses = [
   { key: 'done', title: 'Done', color: 'bg-green-200' }
 ]
 
-const API_URL = 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Board({ tasks, setTasks }) {
   const { theme } = useTheme();

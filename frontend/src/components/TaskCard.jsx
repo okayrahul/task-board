@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function TaskCard({ id, task, isDragging = false }) {
   const { theme } = useTheme();

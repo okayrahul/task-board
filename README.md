@@ -200,6 +200,13 @@ Create a `.env` file in the frontend directory to configure the API URL:
 VITE_API_URL=http://localhost:8000
 ```
 
+For production deployment, create a `.env.production` file:
+```
+VITE_API_URL=https://your-api-domain.com
+```
+
+Make sure to replace `https://your-api-domain.com` with your actual backend API URL in production.
+
 ## Known Issues and Troubleshooting
 
 - If you encounter CORS issues, ensure the backend has proper CORS middleware configured.
