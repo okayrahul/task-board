@@ -2,7 +2,9 @@
 
 A modern task management board application built with React (frontend) and FastAPI (backend). This application allows users to organize tasks by dragging and dropping them between different status columns (To Do, In Progress, Done).
 
-![Task Board](https://via.placeholder.com/800x400?text=Task+Board+Screenshot)
+![Task Board](./assets/preview%201.png)
+
+![Dashboard](./assets/preview%202.png)
 
 ## Features
 
@@ -26,13 +28,13 @@ A modern task management board application built with React (frontend) and FastA
 
 ### Backend
 - FastAPI (Python)
-- SQLite for data storage
+- SQLite for local development
 
 ## Prerequisites
 
 - Node.js (v16+)
 - Python (v3.9+)
-- npm or yarn
+- npm
 
 ## Installation and Setup
 
@@ -51,20 +53,13 @@ cd task-board
 cd backend
 ```
 
-2. Create a virtual environment (optional but recommended):
-
-```bash
-python -m venv venv
-.\venv\Scripts\activate  # Windows
-```
-
-3. Install required packages:
+2. Install required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Run the server:
+3. Run the server:
 
 ```bash
 uvicorn main:app --reload
@@ -96,81 +91,40 @@ The frontend will be available at http://localhost:5173 (or similar port).
 
 ## Deployment
 
-### Backend Deployment
+### Backend Deployment with Railway
 
-The FastAPI backend can be deployed to various platforms:
+1. Create an account on [Railway](https://railway.app/) if you don't have one already.
 
-#### Heroku
-1. Create a `Procfile` in the backend directory with the following content:
-```
-web: gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
-```
+2. Create a new project and select "Deploy from GitHub repo".
 
-2. Add `gunicorn` to `requirements.txt`
+3. Connect your GitHub repository and select the task-board repository.
 
-3. Deploy using Heroku CLI:
-```bash
-heroku create your-app-name
-git push heroku main
-```
+4. Configure the deployment settings:
+   - Service: Select Python
+   - Root Directory: `/backend`
+   - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 
-#### Docker
-1. Create a Dockerfile in the backend directory:
-```dockerfile
-FROM python:3.9
+5. Set environment variables as needed in the Railway dashboard.
 
-WORKDIR /app
+Railway will automatically deploy your backend and provide you with a URL to access it.
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+### Frontend Deployment with Vercel
 
-COPY . .
+1. Create an account on [Vercel](https://vercel.com/) if you don't have one already.
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
+2. Create a new project and import your GitHub repository.
 
-2. Build and run the Docker image:
-```bash
-docker build -t task-board-backend .
-docker run -p 8000:8000 task-board-backend
-```
+3. Configure the build settings:
+   - Framework Preset: Vite
+   - Root Directory: `/frontend`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
 
-### Frontend Deployment
+4. Set the environment variable `VITE_API_URL` to your Railway backend URL.
 
-The React application can be deployed to:
+5. Deploy the application.
 
-#### Netlify/Vercel
-1. Build the production version:
-```bash
-npm run build
-```
-
-2. Deploy the `dist` directory to Netlify or Vercel using their CLI or web interface.
-
-#### Docker
-1. Create a Dockerfile in the frontend directory:
-```dockerfile
-FROM node:16-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=0 /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-2. Build and run the Docker image:
-```bash
-docker build -t task-board-frontend .
-docker run -p 80:80 task-board-frontend
-```
+Vercel will build and deploy your frontend application, providing you with a URL to access it.
 
 ## API Documentation
 
@@ -187,48 +141,25 @@ Key endpoints:
 
 ### Environment Variables
 
-#### Backend
-Create a `.env` file in the backend directory with the following variables:
-```
-DATABASE_URL=sqlite:///./tasks.db
-DEBUG=True
-```
-
 #### Frontend
 Create a `.env` file in the frontend directory to configure the API URL:
 ```
 VITE_API_URL=http://localhost:8000
 ```
 
-For production deployment, create a `.env.production` file:
+For production deployment on Vercel, set the environment variable through the Vercel dashboard:
 ```
-VITE_API_URL=https://your-api-domain.com
+VITE_API_URL=https://your-railway-app-url.railway.app
 ```
-
-Make sure to replace `https://your-api-domain.com` with your actual backend API URL in production.
 
 ## Known Issues and Troubleshooting
 
 - If you encounter CORS issues, ensure the backend has proper CORS middleware configured.
-- For database connection problems, check that the database file has proper write permissions.
-
-## Any additional details, feedback you want to express
-
-During the development of this project, I encountered several challenges that led to architectural decisions I'd like to highlight:
-
-1. **Drag and Drop Implementation**: The project requirements suggested using `react-beautiful-dnd`, but this library is no longer actively maintained and has compatibility issues with React 18. Instead, I implemented drag-and-drop functionality using the modern `@dnd-kit` library, which provides better performance, accessibility, and is actively maintained.
-
-2. **State Management**: Rather than introducing a complex state management library for this relatively small application, I opted to use React's built-in Context API and prop drilling where appropriate. This keeps the codebase simpler and more maintainable.
-
-3. **Error Handling**: I've added comprehensive error handling throughout the application, especially in the drag-and-drop implementation, to prevent common issues like null reference errors that occur in many drag-and-drop implementations.
-
-4. **Mobile Responsiveness**: While the application works on mobile devices, the drag-and-drop interaction could be further optimized for touch interfaces in a future iteration.
-
-The migration from `react-beautiful-dnd` to `@dnd-kit` required a significant rewrite of the drag-and-drop logic, but resulted in a more stable application with better performance and fewer edge cases.
+- The application uses SQLite for simplicity in development; consider using a more robust database for production.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Contributors
 
