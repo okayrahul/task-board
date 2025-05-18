@@ -152,15 +152,6 @@ For production deployment on Vercel, set the environment variable through the Ve
 VITE_API_URL=https://your-railway-app-url.railway.app
 ```
 
-## Known Issues and Troubleshooting
-
-- If you encounter CORS issues, ensure the backend has proper CORS middleware configured.
-- The application uses SQLite for simplicity in development; consider using a more robust database for production.
-
-## License
-
-This project is licensed under the MIT License.
-
 ## Contributors
 
 - Rahul Ajith Kumar
