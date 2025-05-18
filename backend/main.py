@@ -48,6 +48,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {"message": "Task Board API is running"}
+
+
 @app.get("/tasks", response_model=List[Task])
 def get_tasks(
     status: Optional[str] = Query(None, description="Filter by status"),
