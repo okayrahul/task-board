@@ -1,32 +1,72 @@
 [
   {
     "id": "1",
-    "title": "Sample task",
-    "description": "test\n",
+    "title": "Design landing page",
+    "description": "Create hero section and responsive layout for homepage.",
     "status": "todo",
     "priority": "high",
-    "due_date": "2025-05-23",
-    "tags": [],
-    "created_at": "2025-05-17T09:21:02.070230"
+    "due_date": "2025-05-25",
+    "created_at": "2025-05-17T10:00:00.000Z",
+    "tags": ["design", "frontend"]
   },
   {
-    "id": "ba84f9d3-e6a1-4b98-8437-52862ccdb815",
-    "title": "hello",
-    "description": "2 kilo",
-    "status": "todo",
+    "id": "2",
+    "title": "Set up FastAPI routes",
+    "description": "Implement GET, POST, PUT, DELETE endpoints for tasks.",
+    "status": "inProgress",
     "priority": "medium",
-    "due_date": "",
-    "created_at": "2025-05-17T10:29:22.369955",
-    "tags": []
+    "due_date": "2025-05-21",
+    "created_at": "2025-05-16T08:42:00.000Z",
+    "tags": ["backend", "api"]
   },
   {
-    "id": "cd51bf33-803b-4ed8-b58a-ac8995f88fc1",
-    "title": "rahul laundry ",
-    "description": "do by 6 pm ",
+    "id": "3",
+    "title": "Write unit tests",
+    "description": "Add tests for task creation and drag-drop functionality.",
+    "status": "todo",
+    "priority": "low",
+    "due_date": "2025-05-30",
+    "created_at": "2025-05-17T11:30:00.000Z",
+    "tags": ["testing"]
+  },
+  {
+    "id": "4",
+    "title": "Connect frontend to backend",
+    "description": "Use Axios to call API from React components.",
+    "status": "inProgress",
+    "priority": "high",
+    "due_date": "2025-05-20",
+    "created_at": "2025-05-17T09:15:00.000Z",
+    "tags": ["integration", "axios"]
+  },
+  {
+    "id": "5",
+    "title": "Deploy backend on Railway",
+    "description": "Create new service, set root as /backend, and test endpoints.",
+    "status": "done",
+    "priority": "medium",
+    "due_date": "2025-05-18",
+    "created_at": "2025-05-16T13:00:00.000Z",
+    "tags": ["deployment"]
+  },
+  {
+    "id": "6",
+    "title": "Write README documentation",
+    "description": "Add setup steps, screenshots, and project description.",
     "status": "done",
     "priority": "low",
-    "due_date": "2025-05-17",
-    "created_at": "2025-05-17T11:00:48.778758",
-    "tags": []
+    "due_date": "2025-05-19",
+    "created_at": "2025-05-16T14:22:00.000Z",
+    "tags": ["docs"]
+  },
+  {
+    "id": "7",
+    "title": "Fix drag-and-drop bug on mobile",
+    "description": "Cards do not move properly on iOS Safari.",
+    "status": "todo",
+    "priority": "high",
+    "due_date": "2025-05-28",
+    "created_at": "2025-05-17T12:10:00.000Z",
+    "tags": ["bug", "mobile"]
   }
 ]
