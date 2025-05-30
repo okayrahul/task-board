@@ -154,4 +154,4 @@ VITE_API_URL=https://your-railway-app-url.railway.app
 
 ## Contributors
 
-- Rahul Ajith Kumar (IIIT Delhi)
+- Rahul Ajith Kumar
