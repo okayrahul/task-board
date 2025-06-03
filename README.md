@@ -28,7 +28,6 @@ A modern task management board application built with React (frontend) and FastA
 
 ### Backend
 - FastAPI (Python)
-- SQLite for local development
 
 ## Prerequisites
 
